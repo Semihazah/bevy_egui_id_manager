@@ -8,7 +8,8 @@ impl Plugin for BevyEguiIdManager {
         app.insert_resource(EguiIdManager {
             ids: BiMap::default(),
             current_id: 0,
-        });
+        })
+        .add_system(remove_unloaded_handles);
     }
 }
 
@@ -18,23 +19,30 @@ pub struct EguiIdManager {
 }
 
 impl EguiIdManager {
-    pub fn get_id(&mut self, handle: Handle<Image>, asset_server: &AssetServer) -> u64 {
+    pub fn get_id(&mut self, handle: Handle<Image>) -> u64 {
         if let Some(id) = self.ids.get_by_right(&handle) {
             return *id;
         }
 
         loop {
             self.current_id = self.current_id.wrapping_add(1);
-            match self.ids.get_by_left(&self.current_id) {
-                Some(handle) => match asset_server.get_load_state(handle) {
-                    bevy::asset::LoadState::Unloaded => break,
-                    _ => (),
-                },
-                None => break,
+            if self.ids.contains_left(&self.current_id) {
+                break;
             }
         }
 
         self.ids.insert(self.current_id, handle.as_weak());
         self.current_id
+    }
+}
+
+fn remove_unloaded_handles(
+    mut ev_asset: EventReader<AssetEvent<Image>>,
+    mut id_manager: ResMut<EguiIdManager>,
+) {
+    for ev in ev_asset.iter() {
+        if let AssetEvent::Removed { handle } = ev {
+            id_manager.ids.remove_by_right(handle);
+        }
     }
 }
