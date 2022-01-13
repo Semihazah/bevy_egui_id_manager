@@ -26,7 +26,7 @@ impl EguiIdManager {
 
         loop {
             self.current_id = self.current_id.wrapping_add(1);
-            if self.ids.contains_left(&self.current_id) {
+            if !self.ids.contains_left(&self.current_id) {
                 break;
             }
         }
