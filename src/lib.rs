@@ -18,7 +18,7 @@ pub struct EguiIdManager {
 }
 
 impl EguiIdManager {
-    pub fn get_id(&mut self, handle: Handle<Image>, asset_server: &Res<AssetServer>) -> u64 {
+    pub fn get_id(&mut self, handle: Handle<Image>, asset_server: &AssetServer) -> u64 {
         if let Some(id) = self.ids.get_by_right(&handle) {
             return *id;
         }
